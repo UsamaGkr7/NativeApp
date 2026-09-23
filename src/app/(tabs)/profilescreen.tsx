@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import {
   FlatList,
   Image,
@@ -53,7 +54,10 @@ const MOCK_POSTS: Post[] = [
 export default function ProfileScreen() {
   // 3. The Render Item Function (Equivalent to itemBuilder in Flutter)
   const renderPostItem = ({ item }: { item: Post }) => (
-    <TouchableOpacity style={styles.postCard}>
+    <TouchableOpacity
+      style={styles.postCard}
+      onPress={() => router.push(`/posts/${item.id}`)}
+    >
       <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
       <View style={styles.postContent}>
         <Text style={styles.postTitle}>{item.title}</Text>
@@ -65,6 +69,9 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* --- HEADER SECTION --- */}
+      <TouchableOpacity onPress={() => router.back()}>
+        <Text>← Back</Text>
+      </TouchableOpacity>
       <View style={styles.header}>
         <Image
           source={{ uri: "https://i.pravatar.cc/150?img=12" }}
