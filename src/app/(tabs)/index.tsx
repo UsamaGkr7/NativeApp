@@ -1,10 +1,11 @@
 import { useFavorites } from "@/context/FavoritesContext";
 import { router } from "expo-router"; // Import the router
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -20,7 +21,15 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   // Inside your HomeScreen component:
+
+  const filteredPosts = useMemo(() => {
+    if (!search) return posts;
+    return posts.filter((post) =>
+      post.title.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [posts, setSearch]);
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   const fetchData = async () => {
@@ -48,6 +57,13 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search posts..."
+        value={search}
+        onChangeText={setSearch}
+        placeholderTextColor="#999"
+      />
       <Text style={styles.header}>My Feed</Text>
 
       <FlatList
@@ -137,4 +153,13 @@ const styles = StyleSheet.create({
   },
   cardBody: { fontSize: 14, color: "#666", flex: 1 },
   arrow: { fontSize: 20, color: "#007AFF", marginLeft: 10 },
+  searchInput: {
+    backgroundColor: "white",
+    padding: 12,
+    borderRadius: 10,
+    fontSize: 16,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
 });

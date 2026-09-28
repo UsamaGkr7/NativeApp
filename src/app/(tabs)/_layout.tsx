@@ -52,6 +52,15 @@ export default function TabsLayout() {
             ),
           }}
         />
+        <Tabs.Screen
+          name="create"
+          options={{
+            title: "Create",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="add-circle" size={size} color={color} />
+            ),
+          }}
+        />
       </Tabs>
     </FavoritesProvider>
   );
