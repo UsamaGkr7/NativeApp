@@ -1,6 +1,7 @@
 import { useFavorites } from "@/context/FavoritesContext";
 import { router } from "expo-router";
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -10,12 +11,13 @@ import {
 
 export default function FavoritesScreen() {
   // Use our custom hook to get the global data!
-  const { favorites, removeFavorite } = useFavorites();
+  const { favorites, removeFavorite, loading } = useFavorites();
 
-  if (favorites.length === 0) {
+  // Show a spinner while reading from AsyncStorage
+  if (loading) {
     return (
       <View style={styles.center}>
-        <Text style={styles.emptyText}>No favorites yet! ❤️</Text>
+        <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }

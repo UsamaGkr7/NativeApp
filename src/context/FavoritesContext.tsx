@@ -1,7 +1,12 @@
-// context/FavoritesContext.tsx
-import { createContext, ReactNode, useContext, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-// 1. Define the shape of a Post (Same as before)
 export interface Post {
   userId: number;
   id: number;
@@ -9,32 +14,61 @@ export interface Post {
   body: string;
 }
 
-// 2. Define what our Context will provide
 interface FavoritesContextType {
   favorites: Post[];
   addFavorite: (post: Post) => void;
   removeFavorite: (id: number) => void;
   isFavorite: (id: number) => boolean;
+  loading: boolean; // Add loading state for initial load
 }
 
-// 3. Create the Context
 const FavoritesContext = createContext<FavoritesContextType | undefined>(
   undefined,
 );
 
-// 4. Create the Provider (This holds the actual data)
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true); // Start with loading true
 
-  const addFavorite = (post: Post) => {
-    // Prevent duplicates
-    if (!favorites.find((p) => p.id === post.id)) {
-      setFavorites([...favorites, post]);
+  // 1. LOAD data when the app starts
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
+  const loadFavorites = async () => {
+    try {
+      // AsyncStorage only stores STRINGS, so we must parse the JSON
+      const storedFavorites = await AsyncStorage.getItem("my_favorites");
+      if (storedFavorites) {
+        setFavorites(JSON.parse(storedFavorites));
+      }
+    } catch (error) {
+      console.error("Failed to load favorites", error);
+    } finally {
+      setLoading(false); // Done loading from disk
     }
   };
 
+  // 2. SAVE data whenever the favorites array changes
+  const saveFavorites = async (newFavorites: Post[]) => {
+    try {
+      // Convert the array to a JSON string before saving
+      await AsyncStorage.setItem("my_favorites", JSON.stringify(newFavorites));
+    } catch (error) {
+      console.error("Failed to save favorites", error);
+    }
+  };
+
+  const addFavorite = (post: Post) => {
+    const updatedFavorites = [...favorites, post];
+    setFavorites(updatedFavorites);
+    saveFavorites(updatedFavorites); // Save to disk!
+  };
+
   const removeFavorite = (id: number) => {
-    setFavorites(favorites.filter((p) => p.id !== id));
+    const updatedFavorites = favorites.filter((p) => p.id !== id);
+    setFavorites(updatedFavorites);
+    saveFavorites(updatedFavorites); // Save to disk!
   };
 
   const isFavorite = (id: number) => {
@@ -43,14 +77,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   return (
     <FavoritesContext.Provider
-      value={{ favorites, addFavorite, removeFavorite, isFavorite }}
+      value={{ favorites, addFavorite, removeFavorite, isFavorite, loading }}
     >
       {children}
     </FavoritesContext.Provider>
   );
 }
 
-// 5. Create a custom hook to make it easier to use (Optional but recommended)
 export function useFavorites() {
   const context = useContext(FavoritesContext);
   if (!context) {
