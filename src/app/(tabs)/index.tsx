@@ -1,3 +1,4 @@
+import { useFavorites } from "@/context/FavoritesContext";
 import { router } from "expo-router"; // Import the router
 import { useEffect, useState } from "react";
 import {
@@ -10,7 +11,7 @@ import {
 
 interface Post {
   userId: number;
-  id: string;
+  id: number;
   title: string;
   body: string;
 }
@@ -19,6 +20,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Inside your HomeScreen component:
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   const fetchData = async () => {
     setError(null); // Clear previous errors
@@ -49,17 +52,38 @@ export default function HomeScreen() {
 
       <FlatList
         data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            // THIS IS THE NAVIGATION PART!
-            onPress={() => router.push(`/posts/${item.id}`)}
-          >
-            <Text>{item.title}</Text>
-            <Text style={styles.arrow}>→</Text>
-          </TouchableOpacity>
-        )}
+        keyExtractor={(item) => item.id as unknown as string}
+        renderItem={({ item }) => {
+          const isFav = isFavorite(item.id);
+
+          return (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => router.push(`/posts/${item.id}`)}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={styles.cardBody} numberOfLines={2}>
+                  {item.body}
+                </Text>
+              </View>
+
+              {/* The Heart Button */}
+              <TouchableOpacity
+                onPress={() =>
+                  isFav ? removeFavorite(item.id) : addFavorite(item)
+                }
+                style={{ padding: 10 }}
+              >
+                <Text style={{ fontSize: 24, color: isFav ? "red" : "#ccc" }}>
+                  {isFav ? "❤️" : "🤍"}
+                </Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
